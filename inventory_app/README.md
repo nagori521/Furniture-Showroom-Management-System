@@ -130,3 +130,64 @@ Seeded automatically on first run:
 - role-based permissions
 - GST/tax support and print-friendly billing
 - supplier and purchase-order modules
+
+
+
+## Screenshots
+
+### Dashboard
+
+![Dashboard](../screenshots/dashboard.png)
+
+### Products
+
+![Products](../screenshots/products.png)
+
+### Sales
+
+![Sales](../screenshots/sales.png)
+
+### Pending Payments
+
+![Pending Payments](../screenshots/pending-payment.png)
+
+### Manufacturing Orders
+
+![Manufacturing Orders](../screenshots/manufacturing-orders.png)
+
+---
+
+## Business Problem Solved
+
+Traditional showroom operations relied on manual tracking using Google Sheets for:
+
+- preorder tracking
+- pending payments
+- stock management
+- manufacturing delivery records
+
+This system digitizes the workflow by providing:
+
+- centralized inventory control
+- pending payment tracking
+- manufacturing order monitoring
+- invoice generation
+- customer delivery management
+
+---
+
+## Tech Stack
+
+Backend:
+- Python
+- Flask
+- SQLite
+
+Frontend:
+- HTML
+- CSS
+- Bootstrap
+- JavaScript
+
+Reporting:
+- ReportLab PDF generation
