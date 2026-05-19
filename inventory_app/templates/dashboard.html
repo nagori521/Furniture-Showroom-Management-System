@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | Vishal Bharat Furniture Works{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}A polished showroom control center for live product demos, quick customer onboarding, and professional billing.{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <div class="col-md-6 col-xl-3">
+        <section class="stat-card stat-card-premium">
+            <div class="stat-card-head">
+                <span class="stat-icon"><i class="bi bi-box-seam"></i></span>
+                <span class="stat-badge">Catalog</span>
+            </div>
+            <span class="stat-label">Total Products</span>
+            <strong class="stat-value">{{ summary.total_products }}</strong>
+            <p class="stat-note mb-0">Demo-ready furniture models available to sell.</p>
+        </section>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <section class="stat-card stat-card-premium">
+            <div class="stat-card-head">
+                <span class="stat-icon"><i class="bi bi-receipt-cutoff"></i></span>
+                <span class="stat-badge">Sales</span>
+            </div>
+            <span class="stat-label">Total Sales</span>
+            <strong class="stat-value">{{ total_sales }}</strong>
+            <p class="stat-note mb-0">Keep this empty so the client can watch a sale happen live.</p>
+        </section>
+    </div>
+    <div class="col-md-6 col-xl-3">
+            <section class="stat-card stat-card-premium">
+                <div class="stat-card-head">
+                    <span class="stat-icon"><i class="bi bi-currency-rupee"></i></span>
+                    <span class="stat-badge">Revenue</span>
+                </div>
+                <span class="stat-label">Total Revenue</span>
+                <strong class="stat-value">Rs. {{ "%.2f"|format(total_revenue) }}</strong>
+                <p class="stat-note mb-0">Invoices will populate this card as soon as the first demo sale is completed.</p>
+            </section>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <section class="stat-card stat-card-premium">
+                <div class="stat-card-head">
+                    <span class="stat-icon"><i class="bi bi-wallet2"></i></span>
+                    <span class="stat-badge">Payments</span>
+                </div>
+                <span class="stat-label">Total Pending Amount</span>
+                <strong class="stat-value">Rs. {{ "%.2f"|format(payment_metrics.total_pending_amount) }}</strong>
+                <p class="stat-note mb-0">Outstanding balances across customer invoices.</p>
+            </section>
+    </div>
+</div>
+
+
+<div class="row g-4 mb-4">
+    <div class="col-md-6 col-xl-3">
+        <section class="stat-card">
+            <span class="stat-label">Total Paid Today</span>
+            <strong class="stat-value text-success">Rs. {{ "%.2f"|format(payment_metrics.total_paid_today) }}</strong>
+        </section>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <section class="stat-card">
+            <span class="stat-label">Pending Deliveries</span>
+            <strong class="stat-value">{{ payment_metrics.pending_deliveries }}</strong>
+        </section>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <section class="stat-card">
+            <span class="stat-label">Customers With Pending Payments</span>
+            <strong class="stat-value">{{ payment_metrics.customers_with_pending }}</strong>
+        </section>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+        <section class="stat-card">
+            <span class="stat-label">Low Stock Alerts</span>
+            <strong class="stat-value">{{ low_stock_count }}</strong>
+        </section>
+    </div>
+</div>
+
+
+<div class="row g-4">
+    <div class="col-xl-4">
+        <section class="panel h-100">
+            <div class="panel-header"><h3>Inventory Snapshot</h3><span class="panel-caption">Live stock overview</span></div>
+            <div class="metric-stack">
+                <div><div class="stat-label">Stock Units</div><div class="metric-value">{{ summary.total_stock_units }}</div></div>
+                <div><div class="stat-label">Stock Value</div><div class="metric-value">Rs. {{ "%.2f"|format(summary.total_stock_value) }}</div></div>
+                <div><div class="stat-label">Customers</div><div class="metric-value">{{ total_customers }}</div></div>
+            </div>
+        </section>
+    </div>
+    <div class="col-xl-4">
+        <section class="panel h-100">
+            <div class="panel-header"><h3>Low Stock Alerts</h3><span class="panel-caption">Only products needing attention</span></div>
+            {% if summary.low_stock_products %}
+                <div class="list-group list-group-flush">
+                    {% for product in summary.low_stock_products %}
+                        <div class="list-group-item px-0 list-item-soft">
+                            <div class="fw-semibold">{{ product.name }}</div>
+                            <div class="text-muted small">{{ product.code }} | Qty {{ product.quantity }}</div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state-card">
+                    <i class="bi bi-check2-circle"></i>
+                    <div>
+                        <div class="fw-semibold">Inventory looks healthy</div>
+                        <p class="empty-state mb-0">No low stock items at the moment.</p>
+                    </div>
+                </div>
+            {% endif %}
+        </section>
+    </div>
+    <div class="col-xl-4">
+        <section class="panel h-100">
+            <div class="panel-header"><h3>Upcoming Deliveries</h3><span class="panel-caption">Demo starts clean</span></div>
+            {% if upcoming_deliveries %}
+                <div class="list-group list-group-flush">
+                    {% for preorder in upcoming_deliveries %}
+                        <div class="list-group-item px-0 list-item-soft">
+                            <div class="fw-semibold">{{ preorder.customer_name }}</div>
+                            <div class="text-muted small">{{ preorder.product_name }} | {{ preorder.delivery_date }}</div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state-card">
+                    <i class="bi bi-truck"></i>
+                    <div>
+                        <div class="fw-semibold">No scheduled deliveries</div>
+                        <p class="empty-state mb-0">Preorders will appear here once you create one during the demo.</p>
+                    </div>
+                </div>
+            {% endif %}
+        </section>
+    </div>
+</div>
+
+<section class="panel mt-4">
+    <div class="panel-header"><h3>Recent Transactions</h3><span class="panel-caption">Activity feed</span></div>
+    {% if recent_activity %}
+        <div class="activity-list">
+            {% for item in recent_activity %}
+                <div class="activity-item">
+                    <div>
+                        <span class="activity-type">{{ item.type }}</span>
+                        <div class="fw-semibold">{{ item.title }}</div>
+                        <div class="text-muted small">{{ item.meta }}</div>
+                    </div>
+                    <div class="text-muted small">{{ item.timestamp|datetime_display }}</div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state-card">
+            <i class="bi bi-stars"></i>
+            <div>
+                <div class="fw-semibold">Ready for live walkthrough</div>
+                <p class="empty-state mb-0">Add a customer, make a sale, and generate an invoice to show the end-to-end flow.</p>
+            </div>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

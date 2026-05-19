@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}Manufacturing Orders | Vishal Bharat Furniture Works{% endblock %}
+{% block page_title %}Manufacturing Orders{% endblock %}
+{% block page_subtitle %}Track showroom orders sent to manufacturing and record delivery receipts.{% endblock %}
+
+{% block page_actions %}
+    <a class="btn btn-outline-secondary" href="{{ url_for('manufacturing_orders.list_orders') }}">Refresh</a>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-4">
+        <section class="panel form-panel">
+
+            <div class="panel-header">
+                <div>
+                    <h3 class="panel-title">Create New Manufacturing Order</h3>
+                    <p class="page-subtitle panel-subtitle mb-0">Select product and quantity to send to manufacturing.</p>
+                </div>
+            </div>
+
+            <form method="post" class="row g-3 mt-1">
+                <div class="col-12">
+                    <label class="form-label">Product</label>
+                    <select class="form-select" name="product_code" required>
+                        <option value="">Select product</option>
+                        {% for product in products %}
+                            <option value="{{ product.code }}" {% if request.form.get('product_code') == product.code %}selected{% endif %}>
+                                {{ product.name }} ({{ product.code }}) - Available Qty {{ product.quantity }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Ordered Quantity</label>
+                    <input class="form-control" type="number" min="1" name="ordered_quantity" value="{{ request.form.get('ordered_quantity','') }}" required>
+                </div>
+
+                <div class="col-md-6 d-flex align-items-end">
+                    <div class="invoice-total w-100">
+                        Pending will be auto-calculated
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label">Notes</label>
+                    <textarea class="form-control" name="notes" placeholder="Optional notes for manufacturing...">{{ request.form.get('notes','') }}</textarea>
+                </div>
+
+                <div class="col-12 d-grid">
+                    <button class="btn btn-primary" type="submit">Create Manufacturing Order</button>
+                </div>
+            </form>
+        </section>
+    </div>
+
+    <div class="col-lg-8">
+        <section class="panel">
+            <div class="panel-header">
+                <div>
+                    <h3 class="panel-title">Orders Register</h3>
+                    <p class="page-subtitle panel-subtitle mb-0">Status updates automatically when deliveries are received.</p>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-5">
+                        <label class="form-label">Search (product or order #)</label>
+                        <input class="form-control" name="search" value="{{ search }}" placeholder="e.g. MFG-00001 or ALM-ST-101">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Status Filter</label>
+                        <select class="form-select" name="status">
+                            <option value="all" {% if status=='all' %}selected{% endif %}>All</option>
+                            <option value="pending" {% if status=='pending' %}selected{% endif %}>Pending ({{ counts.pending }})</option>
+                            <option value="partial" {% if status=='partial' %}selected{% endif %}>Partial ({{ counts.partial }})</option>
+                            <option value="completed" {% if status=='completed' %}selected{% endif %}>Completed ({{ counts.completed }})</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-grid">
+                        <button class="btn btn-primary" type="button" onclick="applyManufacturingFilters()">Apply</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Order #</th>
+                            <th>Created</th>
+                            <th>Status</th>
+                            <th>Items Summary</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for order in orders %}
+
+                        {% set pending_sum = 0 %}
+                        {% set received_sum = 0 %}
+                        {% for item in order.items %}
+                            {% set pending_sum = pending_sum + item.pending_quantity %}
+                            {% set received_sum = received_sum + item.received_quantity %}
+                        {% endfor %}
+                        <tr>
+                            <td><div class="fw-semibold">{{ order.order_number }}</div></td>
+                            <td>
+                                <div class="compact-stack">
+                                    <div>{{ order.created_at|datetime_display }}</div>
+                                </div>
+                            </td>
+                            <td>
+                                {% if order.status == 'pending' %}
+                                    <span class="badge text-bg-danger">Pending</span>
+                                {% elif order.status == 'partial' %}
+                                    <span class="badge text-bg-warning">Partial</span>
+                                {% else %}
+                                    <span class="badge text-bg-success">Completed</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="compact-stack">
+                                    <div class="text-muted small">Received: <strong>{{ received_sum }}</strong> • Pending: <strong>{{ pending_sum }}</strong></div>
+                                    {% if order.notes %}
+                                        <div class="text-muted small">{{ order.notes }}</div>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="text-end">
+                                <a class="btn btn-sm btn-outline-primary" href="{{ url_for('manufacturing_orders.order_details', order_id=order.id) }}">View</a>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center py-4 text-muted">No manufacturing orders found.</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</div>
+<script>
+    function applyManufacturingFilters() {
+        const searchInput = document.querySelector('input[name="search"]');
+        const statusSelect = document.querySelector('select[name="status"]');
+        const search = searchInput ? searchInput.value : '';
+        const status = statusSelect ? statusSelect.value : 'all';
+
+        const url = new URL(window.location.href);
+        if (search && search.trim()) url.searchParams.set('search', search.trim());
+        else url.searchParams.delete('search');
+
+        if (status && status !== 'all') url.searchParams.set('status', status);
+        else url.searchParams.delete('status');
+
+        window.location.href = url.toString();
+    }
+</script>
+{% endblock %}
+
+

@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}Order Details | Vishal Bharat Furniture Works{% endblock %}
+
+
+{% block page_title %}Order Details{% endblock %}
+{% block page_subtitle %}Receive delivery quantities and update status automatically.{% endblock %}
+
+{% block page_actions %}
+    <a class="btn btn-outline-secondary" href="{{ url_for('manufacturing_orders.list_orders') }}">Back</a>
+{% endblock %}
+
+{% block content %}
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <section class="panel">
+                <div class="panel-header">
+                    <div>
+                        <h3 class="panel-title">{{ order.order_number }}</h3>
+                        <p class="page-subtitle panel-subtitle mb-0">Created {{ order.created_at|datetime_display }}</p>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    {% if order.status == 'pending' %}
+                        <span class="badge text-bg-danger">Pending</span>
+                    {% elif order.status == 'partial' %}
+                        <span class="badge text-bg-warning">Partial</span>
+                    {% else %}
+                        <span class="badge text-bg-success">Completed</span>
+                    {% endif %}
+                </div>
+
+                {% if order.notes %}
+                    <div class="text-muted mb-4">
+                        <div class="form-label">Notes</div>
+                        <div>{{ order.notes }}</div>
+                    </div>
+                {% endif %}
+            </section>
+
+            <section class="panel mt-4">
+                <div class="panel-header">
+                    <div>
+                        <h3 class="panel-title">Receive Delivery</h3>
+                        <p class="page-subtitle panel-subtitle mb-0">Update item quantities from manufacturing unit.</p>
+                    </div>
+                </div>
+
+                {% for row in items %}
+                    {% set item = row.item %}
+                    {% if item.pending_quantity > 0 %}
+                        <div class="border rounded-3 p-3 mb-3" style="background: rgba(248,250,252,0.8)">
+                            <div class="fw-semibold">{{ row.product_name }}</div>
+                            <div class="text-muted small">Pending: <strong>{{ item.pending_quantity }}</strong> | Ordered: {{ item.ordered_quantity }}</div>
+
+                            <form method="post" action="{{ url_for('manufacturing_orders.receive_delivery', order_id=order.id, order_item_id=item.id) }}" class="row g-2 mt-2">
+                                <div class="col-12">
+                                    <label class="form-label">Delivered Quantity</label>
+                                    <input class="form-control" type="number" min="1" name="delivered_quantity" required>
+                                </div>
+                                <div class="col-12 d-grid">
+                                    <button class="btn btn-primary" type="submit" data-confirm-delivery="true">Receive Delivery</button>
+
+                                </div>
+                            </form>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </section>
+        </div>
+
+        <div class="col-lg-8">
+            <section class="panel">
+                <div class="panel-header">
+                    <div>
+                        <h3 class="panel-title">Items & Delivery History</h3>
+                        <p class="page-subtitle panel-subtitle mb-0">All delivery receipts are listed below.</p>
+                    </div>
+                </div>
+
+                {% for row in items %}
+                    {% set item = row.item %}
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                            <div>
+                                <div class="fw-semibold">{{ row.product_name }}</div>
+                                <div class="text-muted small">{{ item.product_code }} • Ordered {{ item.ordered_quantity }}</div>
+                            </div>
+                            <div class="text-end">
+                                {% if item.pending_quantity == 0 %}
+                                    <span class="badge text-bg-success">Completed</span>
+                                {% elif item.received_quantity > 0 %}
+                                    <span class="badge text-bg-warning">Partial</span>
+                                {% else %}
+                                    <span class="badge text-bg-danger">Pending</span>
+                                {% endif %}
+                                <div class="text-muted small mt-1">Received {{ item.received_quantity }} • Pending {{ item.pending_quantity }}</div>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Delivered Qty</th>
+                                        <th>Delivered At</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if row.deliveries %}
+                                        {% for d in row.deliveries %}
+                                            <tr>
+                                                <td>{{ d.delivered_quantity }}</td>
+                                                <td>{{ d.delivered_at|datetime_display }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="2" class="text-center py-3 text-muted">No deliveries received yet.</td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                {% endfor %}
+            </section>
+        </div>
+    </div>
+{% endblock %}
+

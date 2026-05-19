@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% set bill_number = "BOOK-%05d"|format(preorder.id) %}
+{% set subtotal = preorder.subtotal %}
+
+{% block title %}Bill {{ bill_number }} | Vishal Bharat Furniture Works{% endblock %}
+{% block page_title %}Bill {{ bill_number }}{% endblock %}
+{% block page_subtitle %}Booking bill for reserved almirah order.{% endblock %}
+{% block page_actions %}<a class="btn btn-outline-primary" href="{{ url_for('preorders.download_bill', preorder_id=preorder.id) }}">Download PDF</a>{% endblock %}
+
+{% block content %}
+<section class="panel invoice-panel invoice-sheet">
+    <img class="bill-address-banner" src="{{ url_for('static', filename='img/bill-header.jpeg') }}" alt="Vishal Bharat Furniture Works bill header">
+    <div class="document-header">
+        <div>
+            <p class="document-kicker">Furniture Showroom</p>
+            <h3 class="mb-1">Vishal Bharat Furniture Works</h3>
+            <div class="text-muted">Booking bill for reserved showroom order</div>
+        </div>
+        <div class="document-meta">
+            <div><span>Bill No</span><strong>{{ bill_number }}</strong></div>
+            <div><span>Booked On</span><strong>{{ preorder.created_at|datetime_display }}</strong></div>
+            <div><span>Delivery Date</span><strong>{{ preorder.delivery_date }}</strong></div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="detail-card">
+                <h4 class="h6 text-muted">Customer</h4>
+                <div class="fw-semibold">{{ preorder.customer_name }}</div>
+                <div>{{ preorder.customer_phone }}</div>
+                <div>{{ preorder.customer_address }}</div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="detail-card">
+                <h4 class="h6 text-muted">Booking Details</h4>
+                <div class="fw-semibold">{{ preorder.product_name }}</div>
+                <div>Product code: {{ preorder.product_code }}</div>
+                <div>Status: {{ preorder.status.title() }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table">
+            <thead><tr><th>Description</th><th>Product Code</th><th>Qty</th><th>Unit Price</th><th>Subtotal</th></tr></thead>
+            <tbody><tr><td>{{ preorder.product_name }}</td><td>{{ preorder.product_code }}</td><td>{{ preorder.quantity }}</td><td>Rs. {{ "%.2f"|format(preorder.unit_price) }}</td><td>Rs. {{ "%.2f"|format(subtotal) }}</td></tr></tbody>
+        </table>
+    </div>
+
+    <div class="invoice-summary">
+        <div class="invoice-summary-row"><span>Subtotal</span><strong>Rs. {{ "%.2f"|format(preorder.subtotal) }}</strong></div>
+        <div class="invoice-summary-row"><span>Discount</span><strong>Rs. {{ "%.2f"|format(preorder.discount_amount) }}</strong></div>
+        <div class="invoice-summary-row"><span>Final Total</span><strong>Rs. {{ "%.2f"|format(preorder.final_total) }}</strong></div>
+        <div class="invoice-summary-row"><span>Advance Paid</span><strong>Rs. {{ "%.2f"|format(preorder.advance_paid) }}</strong></div>
+        <div class="invoice-summary-row invoice-summary-row-total"><span>Pending Amount</span><strong class="{% if preorder.pending_amount > 0 %}text-danger{% else %}text-success{% endif %}">Rs. {{ "%.2f"|format(preorder.pending_amount) }}</strong></div>
+    </div>
+    <div class="document-footer">
+        <div>Your stock has been reserved for the scheduled delivery date.</div>
+        <div>Please keep this bill for delivery coordination and payment reference.</div>
+    </div>
+</section>
+{% endblock %}

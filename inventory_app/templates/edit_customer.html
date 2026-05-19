@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Customer | Vishal Bharat Furniture Works{% endblock %}
+{% block page_title %}Edit Customer{% endblock %}
+{% block page_subtitle %}Update customer contact details for billing and delivery coordination.{% endblock %}
+
+{% block content %}
+<section class="panel form-panel">
+    <form method="post" class="row g-3">
+        <div class="col-md-6"><label class="form-label">Name</label><input class="form-control" name="name" value="{{ request.form.get('name', customer.name) }}" required></div>
+        <div class="col-md-6"><label class="form-label">Phone</label><input class="form-control" name="phone" value="{{ request.form.get('phone', customer.phone) }}" required></div>
+        <div class="col-12"><label class="form-label">Address</label><textarea class="form-control" rows="4" name="address" required>{{ request.form.get('address', customer.address) }}</textarea></div>
+        <div class="col-12 d-flex gap-2"><button class="btn btn-primary" type="submit">Update Customer</button><a class="btn btn-outline-secondary" href="{{ url_for('customers.customers') }}">Cancel</a></div>
+    </form>
+</section>
+{% endblock %}

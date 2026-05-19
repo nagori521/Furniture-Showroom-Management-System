@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Payment History {{ sale.invoice_number }} | Vishal Bharat Furniture Works{% endblock %}
+{% block page_title %}Payment History{% endblock %}
+{% block page_subtitle %}Invoice {{ sale.invoice_number }} payment timeline and current balance.{% endblock %}
+{% block page_actions %}<a class="btn btn-outline-secondary" href="{{ url_for('payments.pending_payments') }}">Back to Pending</a>{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-4">
+        <section class="panel h-100">
+            <div class="panel-header"><h3>Invoice Balance</h3></div>
+            <div class="metric-stack">
+                <div><div class="stat-label">Customer</div><div class="metric-value">{{ sale.customer_name }}</div><div class="text-muted small">{{ sale.customer_phone }}</div></div>
+                <div><div class="stat-label">Final Amount</div><div class="metric-value">Rs. {{ "%.2f"|format(sale.final_amount) }}</div></div>
+                <div><div class="stat-label">Total Paid</div><div class="metric-value text-success">Rs. {{ "%.2f"|format(sale.paid_amount) }}</div></div>
+                <div><div class="stat-label">Pending Balance</div><div class="metric-value {% if sale.pending_amount > 0 %}text-danger{% else %}text-success{% endif %}">Rs. {{ "%.2f"|format(sale.pending_amount) }}</div></div>
+                <div><span class="badge payment-badge payment-{{ sale.payment_status|lower }}">{{ sale.payment_status }}</span></div>
+            </div>
+            {% if sale.pending_amount > 0 %}
+                <div class="d-grid gap-2 mt-4">
+                    <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#paymentModal{{ sale.id }}">Add Payment</button>
+                    <form method="post" action="{{ url_for('payments.mark_fully_paid', sale_id=sale.id) }}">
+                        <input type="hidden" name="next" value="{{ request.path }}">
+                        <button class="btn btn-outline-success w-100" type="submit">Mark Fully Paid</button>
+                    </form>
+                </div>
+            {% endif %}
+        </section>
+    </div>
+    <div class="col-lg-8">
+        <section class="panel">
+            <div class="panel-header"><h3>Payment Timeline</h3><span class="panel-caption">{{ sale.product_name }}</span></div>
+            <div class="payment-timeline">
+                {% for payment in payments %}
+                    <div class="payment-timeline-item">
+                        <div class="payment-timeline-dot"></div>
+                        <div>
+                            <div class="d-flex flex-wrap justify-content-between gap-2">
+                                <strong>Rs. {{ "%.2f"|format(payment.payment_amount) }}</strong>
+                                <span class="text-muted small">{{ payment.payment_date }}</span>
+                            </div>
+                            <div class="text-muted small">{{ payment.payment_method }}{% if payment.payment_note %} | {{ payment.payment_note }}{% endif %}</div>
+                            <a class="small" href="{{ url_for('payments.payment_receipt', payment_id=payment.id) }}">Receipt PDF</a>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="empty-state-card">
+                        <i class="bi bi-wallet2"></i>
+                        <div>
+                            <div class="fw-semibold">No payments recorded yet</div>
+                            <p class="empty-state mb-0">Add a payment to start the invoice timeline.</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+</div>
+
+{% include "payment_modal.html" %}
+{% endblock %}

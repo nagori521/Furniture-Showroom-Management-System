@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Preorders | Vishal Bharat Furniture Works{% endblock %}
+{% block page_title %}Preorders{% endblock %}
+{% block page_subtitle %}Reserve stock, plan delivery dates, and track pending orders.{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-4">
+        <section class="panel form-panel">
+            <div class="panel-header">
+                <div>
+                    <h3 class="panel-title">Create Preorder</h3>
+                    <p class="page-subtitle panel-subtitle mb-0">Reserve stock and assign delivery details with the customer in one flow.</p>
+                </div>
+            </div>
+            <form method="post" class="row g-3 mt-1">
+                <div class="col-12"><label class="form-label">Product</label><select class="form-select js-preorder-product" name="product_id" required><option value="">Select product</option>{% for product in products %}<option value="{{ product.id }}" data-price="{{ product.price }}" {% if request.form.get('product_id') == product.id|string %}selected{% endif %}>{{ product.name }} ({{ product.code }}) - Qty {{ product.quantity }}</option>{% endfor %}</select></div>
+                <div class="col-12">
+                    <label class="form-label d-block">Customer Source</label>
+                    <div class="d-flex flex-wrap gap-3 pt-1">
+                        <div class="form-check">
+                            <input class="form-check-input js-customer-choice" type="radio" name="customer_choice" id="preorderCustomerExisting" value="existing" {% if request.form.get('customer_choice', 'existing') != 'new' %}checked{% endif %}>
+                            <label class="form-check-label" for="preorderCustomerExisting">Select existing customer</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input js-customer-choice" type="radio" name="customer_choice" id="preorderCustomerNew" value="new" {% if request.form.get('customer_choice') == 'new' %}checked{% endif %}>
+                            <label class="form-check-label" for="preorderCustomerNew">Add new customer</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 js-customer-existing{% if request.form.get('customer_choice') == 'new' %} d-none{% endif %}">
+                    <label class="form-label">Customer</label>
+                    <select class="form-select" name="customer_id">
+                        <option value="">Select customer</option>
+                        {% for customer in customers %}
+                            <option value="{{ customer.id }}" {% if request.form.get('customer_id') == customer.id|string or (not request.form and selected_customer_id == customer.id) %}selected{% endif %}>{{ customer.name }} - {{ customer.phone }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12 js-customer-new{% if request.form.get('customer_choice', 'existing') != 'new' %} d-none{% endif %}">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Customer Name</label>
+                            <input class="form-control" name="customer_name" value="{{ request.form.get('customer_name', '') }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Phone</label>
+                            <input class="form-control" name="customer_phone" inputmode="numeric" value="{{ request.form.get('customer_phone', '') }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Address</label>
+                            <input class="form-control" name="customer_address" value="{{ request.form.get('customer_address', '') }}">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6"><label class="form-label">Quantity</label><input class="form-control js-preorder-quantity" type="number" min="1" name="quantity" value="{{ request.form.get('quantity', '') }}" required></div>
+                <div class="col-md-6">
+                    <label class="form-label" for="preorderDiscountAmount">Discount Amount (₹)</label>
+                    <div class="input-group">
+                        <span class="input-group-text">₹</span>
+                        <input class="form-control js-preorder-discount" id="preorderDiscountAmount" type="number" min="0" step="0.01" name="discount_amount" value="{{ request.form.get('discount_amount', '0') }}" required>
+                    </div>
+                    <small class="text-muted">Enter manual discount for booking negotiation.</small>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" for="preorderAdvancePaid">Advance Paid (₹)</label>
+                    <div class="input-group">
+                        <span class="input-group-text">₹</span>
+                        <input class="form-control js-preorder-advance" id="preorderAdvancePaid" type="number" min="0" step="0.01" name="advance_paid" value="{{ request.form.get('advance_paid', '0') }}" required>
+                    </div>
+                    <small class="text-muted">Collect booking advance and keep pending amount ready.</small>
+                </div>
+                <div class="col-12">
+                    <div class="invoice-summary sale-preview">
+                        <div class="invoice-summary-row"><span>Subtotal</span><strong class="js-preorder-subtotal">Rs. 0.00</strong></div>
+                        <div class="invoice-summary-row"><span>Discount</span><strong class="js-preorder-discount-label">Rs. 0.00</strong></div>
+                        <div class="invoice-summary-row"><span>Final Amount</span><strong class="js-preorder-final">Rs. 0.00</strong></div>
+                        <div class="invoice-summary-row"><span>Advance Paid</span><strong class="js-preorder-advance-label">Rs. 0.00</strong></div>
+                        <div class="invoice-summary-row invoice-summary-row-total"><span>Pending Amount</span><strong class="js-preorder-pending">Rs. 0.00</strong></div>
+                    </div>
+                </div>
+                <div class="col-12"><label class="form-label">Delivery Date</label><input class="form-control" type="date" name="delivery_date" value="{{ request.form.get('delivery_date', '') }}" required></div>
+                <div class="col-12 d-grid"><button class="btn btn-primary" type="submit">Create Preorder</button></div>
+            </form>
+        </section>
+
+        <section class="panel mt-4">
+            <div class="panel-header"><h3>Upcoming Deliveries</h3></div>
+            {% if upcoming_deliveries %}
+                <div class="list-group list-group-flush">
+                    {% for preorder in upcoming_deliveries %}
+                        <div class="list-group-item px-0"><div class="fw-semibold">{{ preorder.customer_name }}</div><div class="text-muted small">{{ preorder.product_name }} | {{ preorder.delivery_date }}</div></div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="empty-state mb-0">No pending deliveries.</p>
+            {% endif %}
+        </section>
+    </div>
+
+    <div class="col-lg-8">
+        <section class="panel">
+            <div class="panel-header">
+                <div>
+                    <h3 class="panel-title">Preorder Register</h3>
+                    <p class="page-subtitle panel-subtitle mb-0">Filter by delivery status and track scheduled fulfillment.</p>
+                </div>
+                <form class="d-flex flex-wrap gap-2" method="get">
+                    {% if selected_customer_id %}
+                        <input type="hidden" name="customer_id" value="{{ selected_customer_id }}">
+                    {% endif %}
+                    <select class="form-select form-select-sm" name="status">
+                        <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All statuses</option>
+                        <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                        <option value="delivered" {% if status_filter == 'delivered' %}selected{% endif %}>Delivered</option>
+                    </select>
+                    <button class="btn btn-outline-primary btn-sm" type="submit">Apply</button>
+                </form>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead><tr><th>Delivery</th><th>Customer</th><th>Product</th><th>Qty</th><th>Discount</th><th>Final Amount</th><th>Advance</th><th>Pending</th><th>Status</th><th class="text-end">Action</th></tr></thead>
+                    <tbody>
+                        {% for preorder in preorders %}
+                            <tr>
+                                <td><div class="compact-stack"><div>{{ preorder.delivery_date }}</div><div class="text-muted small">Created {{ preorder.created_at|datetime_display }}</div></div></td>
+                                <td><div class="compact-stack"><div class="fw-semibold">{{ preorder.customer_name }}</div><div class="text-muted small">{{ preorder.customer_phone }}</div></div></td>
+                                <td><div class="compact-stack"><div>{{ preorder.product_name }}</div><div class="text-muted small">{{ preorder.product_code }}</div></div></td>
+                                <td>{{ preorder.quantity }}</td>
+                                <td>Rs. {{ "%.2f"|format(preorder.discount_amount) }}</td>
+                                <td>Rs. {{ "%.2f"|format(preorder.final_total) }}</td>
+                                <td>Rs. {{ "%.2f"|format(preorder.advance_paid) }}</td>
+                                <td class="{% if preorder.pending_amount > 0 %}text-danger fw-semibold{% endif %}">Rs. {{ "%.2f"|format(preorder.pending_amount) }}</td>
+                                <td><span class="badge {% if preorder.status == 'pending' %}text-bg-warning{% else %}text-bg-success{% endif %}">{{ preorder.status.title() }}</span></td>
+                                <td class="text-end"><div class="inline-actions"><a class="btn btn-sm btn-outline-secondary" href="{{ url_for('preorders.view_bill', preorder_id=preorder.id) }}">Bill</a><form class="inline-actions" method="post" action="{{ url_for('preorders.update_status', preorder_id=preorder.id) }}"><select class="form-select form-select-sm" name="status"><option value="pending" {% if preorder.status == 'pending' %}selected{% endif %}>Pending</option><option value="delivered" {% if preorder.status == 'delivered' %}selected{% endif %}>Delivered</option></select><button class="btn btn-sm btn-outline-primary" type="submit">Update</button></form></div></td>
+                            </tr>
+                        {% else %}
+                            <tr><td colspan="10" class="text-center py-4 text-muted">No preorders found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}

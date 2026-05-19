@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}{{ customer.name }} | Vishal Bharat Furniture Works{% endblock %}
+{% block page_title %}Customer Ledger{% endblock %}
+{% block page_subtitle %}Purchase totals, paid amount, pending balance, and payment history for {{ customer.name }}.{% endblock %}
+{% block page_actions %}<a class="btn btn-outline-secondary" href="{{ url_for('customers.customers') }}">Back to Customers</a>{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <div class="col-md-6 col-xl-3">
+        <section class="stat-card">
+            <span class="stat-label">Customer</span>
+            <strong class="stat-value">{{ customer.name }}</strong>
+            <p class="stat-note mb-0">{{ customer.phone }}</p>
+        </section>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <section class="stat-card">
+            <span class="stat-label">Total Purchased</span>
+            <strong class="stat-value">Rs. {{ "%.2f"|format(payment_summary.total_purchased) }}</strong>
+        </section>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <section class="stat-card">
+            <span class="stat-label">Total Paid</span>
+            <strong class="stat-value text-success">Rs. {{ "%.2f"|format(payment_summary.total_paid) }}</strong>
+        </section>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <section class="stat-card">
+            <span class="stat-label">Total Pending</span>
+            <strong class="stat-value {% if payment_summary.total_pending > 0 %}text-danger{% else %}text-success{% endif %}">Rs. {{ "%.2f"|format(payment_summary.total_pending) }}</strong>
+        </section>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-xl-7">
+        <section class="panel">
+            <div class="panel-header"><h3>Purchase Ledger</h3></div>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead><tr><th>Invoice</th><th>Product</th><th>Final</th><th>Paid</th><th>Pending</th><th>Status</th></tr></thead>
+                    <tbody>
+                        {% for sale in sales %}
+                            <tr>
+                                <td><a class="fw-semibold text-decoration-none" href="{{ url_for('payments.payment_details', sale_id=sale.id) }}">{{ sale.invoice_number }}</a></td>
+                                <td>{{ sale.product_name }}</td>
+                                <td>Rs. {{ "%.2f"|format(sale.final_amount) }}</td>
+                                <td>Rs. {{ "%.2f"|format(sale.paid_amount) }}</td>
+                                <td class="{% if sale.pending_amount > 0 %}text-danger fw-semibold{% endif %}">Rs. {{ "%.2f"|format(sale.pending_amount) }}</td>
+                                <td><span class="badge payment-badge payment-{{ sale.payment_status|lower }}">{{ sale.payment_status }}</span></td>
+                            </tr>
+                        {% else %}
+                            <tr><td colspan="6" class="text-center py-4 text-muted">No purchases recorded.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+    <div class="col-xl-5">
+        <section class="panel">
+            <div class="panel-header"><h3>Payment History</h3></div>
+            <div class="payment-timeline">
+                {% for payment in payments %}
+                    <div class="payment-timeline-item">
+                        <div class="payment-timeline-dot"></div>
+                        <div>
+                            <div class="d-flex flex-wrap justify-content-between gap-2">
+                                <strong>Rs. {{ "%.2f"|format(payment.payment_amount) }}</strong>
+                                <span class="text-muted small">{{ payment.payment_date }}</span>
+                            </div>
+                            <div class="small">{{ payment.invoice_number }} | {{ payment.payment_method }}</div>
+                            <div class="text-muted small">{{ payment.payment_note or "Payment received" }}</div>
+                        </div>
+                    </div>
+                {% else %}
+                    <p class="empty-state mb-0">No payment history yet.</p>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}

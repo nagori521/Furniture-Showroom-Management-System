@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Sales | Vishal Bharat Furniture Works{% endblock %}
+{% block page_title %}Sales{% endblock %}
+{% block page_subtitle %}Record customer purchases and generate invoices immediately.{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-4">
+        <section class="panel form-panel">
+            <div class="panel-header">
+                <div>
+                    <h3 class="panel-title">Record Sale</h3>
+                    <p class="page-subtitle panel-subtitle mb-0">Select a saved customer or create a new one right here.</p>
+                </div>
+            </div>
+            <form method="post" class="row g-3 mt-1">
+                <div class="col-12">
+                    <label class="form-label">Product</label>
+                    <select class="form-select js-sale-product" name="product_id" required>
+                        <option value="">Select product</option>
+                        {% for product in products %}
+                            <option value="{{ product.id }}" data-price="{{ product.price }}" {% if request.form.get('product_id') == product.id|string %}selected{% endif %}>{{ product.name }} ({{ product.code }}) - Qty {{ product.quantity }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12">
+                    <label class="form-label d-block">Customer Source</label>
+                    <div class="d-flex flex-wrap gap-3 pt-1">
+                        <div class="form-check">
+                            <input class="form-check-input js-customer-choice" type="radio" name="customer_choice" id="saleCustomerExisting" value="existing" {% if request.form.get('customer_choice', 'existing') != 'new' %}checked{% endif %}>
+                            <label class="form-check-label" for="saleCustomerExisting">Select existing customer</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input js-customer-choice" type="radio" name="customer_choice" id="saleCustomerNew" value="new" {% if request.form.get('customer_choice') == 'new' %}checked{% endif %}>
+                            <label class="form-check-label" for="saleCustomerNew">Add new customer</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 js-customer-existing{% if request.form.get('customer_choice') == 'new' %} d-none{% endif %}">
+                    <label class="form-label">Customer</label>
+                    <select class="form-select" name="customer_id">
+                        <option value="">Select customer</option>
+                        {% for customer in customers %}
+                            <option value="{{ customer.id }}" {% if request.form.get('customer_id') == customer.id|string %}selected{% endif %}>{{ customer.name }} - {{ customer.phone }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12 js-customer-new{% if request.form.get('customer_choice', 'existing') != 'new' %} d-none{% endif %}">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Customer Name</label>
+                            <input class="form-control" name="customer_name" value="{{ request.form.get('customer_name', '') }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Phone</label>
+                            <input class="form-control" name="customer_phone" inputmode="numeric" value="{{ request.form.get('customer_phone', '') }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Address</label>
+                            <input class="form-control" name="customer_address" value="{{ request.form.get('customer_address', '') }}">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6"><label class="form-label">Quantity</label><input class="form-control js-sale-quantity" type="number" min="1" name="quantity" value="{{ request.form.get('quantity', '') }}" required></div>
+                <div class="col-md-6">
+                    <label class="form-label" for="discountAmount">Discount Amount (₹)</label>
+                    <div class="input-group">
+                        <span class="input-group-text">₹</span>
+                        <input class="form-control js-sale-discount" id="discountAmount" type="number" min="0" step="0.01" name="discount_amount" value="{{ request.form.get('discount_amount', '0') }}" required>
+                    </div>
+                    <small class="text-muted">Enter manual discount for bargaining adjustments.</small>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" for="saleAdvancePaid">Advance Paid (₹)</label>
+                    <div class="input-group">
+                        <span class="input-group-text">₹</span>
+                        <input class="form-control js-sale-advance" id="saleAdvancePaid" type="number" min="0" step="0.01" name="advance_paid" value="{{ request.form.get('advance_paid', '0') }}" required>
+                    </div>
+                    <small class="text-muted">Collect any part-payment now and track pending balance.</small>
+                </div>
+                <div class="col-12">
+                    <div class="invoice-summary sale-preview">
+                        <div class="invoice-summary-row"><span>Subtotal</span><strong class="js-sale-subtotal">Rs. 0.00</strong></div>
+                        <div class="invoice-summary-row"><span>Discount</span><strong class="js-sale-discount-label">Rs. 0.00</strong></div>
+                        <div class="invoice-summary-row"><span>Final Amount</span><strong class="js-sale-final">Rs. 0.00</strong></div>
+                        <div class="invoice-summary-row"><span>Advance Paid</span><strong class="js-sale-advance-label">Rs. 0.00</strong></div>
+                        <div class="invoice-summary-row invoice-summary-row-total"><span>Pending Amount</span><strong class="js-sale-pending">Rs. 0.00</strong></div>
+                    </div>
+                </div>
+                <div class="col-12 d-grid"><button class="btn btn-primary" type="submit">Complete Sale</button></div>
+            </form>
+        </section>
+        <section class="panel mt-4"><div class="stat-label">Total Revenue</div><div class="stat-value">Rs. {{ "%.2f"|format(total_revenue) }}</div></section>
+    </div>
+
+    <div class="col-lg-8">
+        <section class="panel">
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead><tr><th>Invoice</th><th>Sold At</th><th>Customer</th><th>Product</th><th>Qty</th><th>Discount</th><th>Final</th><th>Paid</th><th>Pending</th><th>Status</th><th class="text-end">Invoice</th></tr></thead>
+                    <tbody>
+                        {% for sale in sales %}
+                            <tr>
+                                <td class="fw-semibold">{{ sale.invoice_number }}</td>
+                                <td>{{ sale.sold_at|datetime_display }}</td>
+                                <td><div class="compact-stack"><div>{{ sale.customer_name }}</div><div class="text-muted small">{{ sale.customer_phone }}</div></div></td>
+                                <td><div class="compact-stack"><div>{{ sale.product_name }}</div><div class="text-muted small">{{ sale.product_code }}</div></div></td>
+                                <td>{{ sale.quantity }}</td>
+                                <td>Rs. {{ "%.2f"|format(sale.discount_amount) }}</td>
+                                <td>Rs. {{ "%.2f"|format(sale.final_total) }}</td>
+                                <td>Rs. {{ "%.2f"|format(sale.paid_amount) }}</td>
+                                <td class="{% if sale.pending_amount > 0 %}text-danger fw-semibold{% endif %}">Rs. {{ "%.2f"|format(sale.pending_amount) }}</td>
+                                <td><span class="badge payment-badge payment-{{ sale.payment_status|lower }}">{{ sale.payment_status }}</span></td>
+                                <td class="text-end"><div class="inline-actions"><a class="btn btn-sm btn-outline-secondary" href="{{ url_for('sales.view_invoice', sale_id=sale.id) }}">View</a><a class="btn btn-sm btn-outline-primary" href="{{ url_for('sales.download_invoice', sale_id=sale.id) }}">PDF</a></div></td>
+                            </tr>
+                        {% else %}
+                            <tr><td colspan="11" class="text-center py-4 text-muted">No sales recorded yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}

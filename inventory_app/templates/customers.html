@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Customers | Vishal Bharat Furniture Works{% endblock %}
+{% block page_title %}Customers{% endblock %}
+{% block page_subtitle %}Store customer records for walk-ins, bookings, and completed sales.{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-4">
+        <section class="panel form-panel h-100">
+            <h3 class="panel-title">Add Customer</h3>
+            <form method="post" class="row g-3 mt-1">
+                <div class="col-12"><label class="form-label">Name</label><input class="form-control" name="name" required></div>
+                <div class="col-12"><label class="form-label">Phone</label><input class="form-control" name="phone" required></div>
+                <div class="col-12"><label class="form-label">Address</label><textarea class="form-control" rows="4" name="address" required></textarea></div>
+                <div class="col-12 d-grid"><button class="btn btn-primary" type="submit">Save Customer</button></div>
+            </form>
+        </section>
+    </div>
+
+    <div class="col-lg-8">
+        <section class="panel mb-4">
+            <form class="row g-3 align-items-end" method="get">
+                <div class="col-md-8"><label class="form-label">Search Customers</label><input class="form-control" name="search" value="{{ search }}" placeholder="Name, phone, or address"></div>
+                <div class="col-md-4 d-flex gap-2"><button class="btn btn-dark w-100" type="submit">Search</button><a class="btn btn-outline-secondary w-100" href="{{ url_for('customers.customers') }}">Reset</a></div>
+            </form>
+        </section>
+
+        <section class="panel">
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead><tr><th>Name</th><th>Phone</th><th>Address</th><th>Created</th><th class="text-end">Actions</th></tr></thead>
+                    <tbody>
+                        {% for customer in customers %}
+                            <tr>
+                                <td class="fw-semibold">{{ customer.name }}</td>
+                                <td>{{ customer.phone }}</td>
+                                <td>{{ customer.address }}</td>
+                                <td>{{ customer.created_at|datetime_display }}</td>
+                                <td class="text-end">
+                                    <div class="d-inline-flex gap-2">
+                                        <a class="btn btn-sm btn-outline-primary" href="{{ url_for('customers.customer_details', customer_id=customer.id) }}">Ledger</a>
+                                        <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('customers.edit_customer', customer_id=customer.id) }}">Edit</a>
+                                        <form method="post" action="{{ url_for('customers.delete_customer', customer_id=customer.id) }}"><button class="btn btn-sm btn-outline-danger js-confirm-delete" type="submit">Delete</button></form>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr><td colspan="5" class="text-center py-4 text-muted">No customers found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}

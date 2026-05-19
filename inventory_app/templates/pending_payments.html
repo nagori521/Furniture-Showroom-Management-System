@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Pending Payments | Vishal Bharat Furniture Works{% endblock %}
+{% block page_title %}Pending Payments{% endblock %}
+{% block page_subtitle %}Track due invoices, collect part-payments, and close customer balances cleanly.{% endblock %}
+{% block page_actions %}<a class="btn btn-outline-primary" href="{{ url_for('payments.pending_report') }}"><i class="bi bi-file-earmark-bar-graph"></i> Payment Report</a>{% endblock %}
+
+{% block content %}
+<section class="panel mb-4">
+    <form class="row g-3 align-items-end" method="get">
+        <div class="col-md-9">
+            <label class="form-label">Search Pending Customers</label>
+            <input class="form-control" name="search" value="{{ search }}" placeholder="Invoice, customer, phone, product, or code">
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+            <button class="btn btn-primary w-100" type="submit">Search</button>
+            <a class="btn btn-outline-secondary w-100" href="{{ url_for('payments.pending_payments') }}">Reset</a>
+        </div>
+    </form>
+</section>
+
+<section class="panel">
+    <div class="panel-header">
+        <div>
+            <h3>Due Payment Register</h3>
+            <span class="panel-caption">Only invoices with pending amount are shown here.</span>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Invoice Number</th>
+                    <th>Customer Name</th>
+                    <th>Phone</th>
+                    <th>Product</th>
+                    <th>Final Amount</th>
+                    <th>Paid Amount</th>
+                    <th>Pending Amount</th>
+                    <th>Payment Status</th>
+                    <th>Delivery Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sale in pending_sales %}
+                    <tr>
+                        <td class="fw-semibold">{{ sale.invoice_number }}</td>
+                        <td><a class="text-decoration-none fw-semibold" href="{{ url_for('customers.customer_details', customer_id=sale.customer_id) }}">{{ sale.customer_name }}</a></td>
+                        <td>{{ sale.customer_phone }}</td>
+                        <td><div class="compact-stack"><div>{{ sale.product_name }}</div><div class="text-muted small">{{ sale.product_code }}</div></div></td>
+                        <td>Rs. {{ "%.2f"|format(sale.final_amount) }}</td>
+                        <td>Rs. {{ "%.2f"|format(sale.paid_amount) }}</td>
+                        <td class="text-danger fw-semibold">Rs. {{ "%.2f"|format(sale.pending_amount) }}</td>
+                        <td><span class="badge payment-badge payment-{{ sale.payment_status|lower }}">{{ sale.payment_status }}</span></td>
+                        <td><span class="badge text-bg-success">Completed</span></td>
+                        <td class="text-end">
+                            <div class="inline-actions justify-content-end">
+                                <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('payments.payment_details', sale_id=sale.id) }}">Details</a>
+                                <button class="btn btn-sm btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#paymentModal{{ sale.id }}">Add Payment</button>
+                                <form method="post" action="{{ url_for('payments.mark_fully_paid', sale_id=sale.id) }}">
+                                    <input type="hidden" name="next" value="{{ request.full_path if request.query_string else request.path }}">
+                                    <input type="hidden" name="payment_method" value="Cash">
+                                    <button class="btn btn-sm btn-outline-success" type="submit">Mark Paid</button>
+                                </form>
+                                <a class="btn btn-sm btn-outline-primary" href="{{ url_for('sales.view_invoice', sale_id=sale.id) }}">Invoice</a>
+                            </div>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="10" class="text-center py-4 text-muted">No pending payments found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+{% for sale in pending_sales %}
+    {% include "payment_modal.html" %}
+{% endfor %}
+{% endblock %}

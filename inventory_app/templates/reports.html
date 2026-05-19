@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Reports | Vishal Bharat Furniture Works{% endblock %}
+{% block page_title %}Reports{% endblock %}
+{% block page_subtitle %}Review sales, inventory, and delivery schedules across a chosen date range.{% endblock %}
+{% block page_actions %}<a class="btn btn-outline-primary" href="{{ url_for('payments.pending_report') }}"><i class="bi bi-wallet2"></i> Pending Payment Report</a>{% endblock %}
+
+{% block content %}
+<section class="panel mb-4">
+    <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-4"><label class="form-label">Start Date</label><input class="form-control" type="date" name="start_date" value="{{ start_date }}"></div>
+        <div class="col-md-4"><label class="form-label">End Date</label><input class="form-control" type="date" name="end_date" value="{{ end_date }}"></div>
+        <div class="col-md-4 d-flex gap-2"><button class="btn btn-primary w-100" type="submit">Apply Filter</button><a class="btn btn-outline-secondary w-100" href="{{ url_for('reports.reports') }}">Reset</a></div>
+    </form>
+</section>
+
+<div class="row g-4">
+    <div class="col-12">
+        <section class="panel">
+            <div class="panel-header"><h3>Sales Report</h3></div>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead><tr><th>Invoice</th><th>Date</th><th>Customer</th><th>Product</th><th>Qty</th><th>Total</th></tr></thead>
+                    <tbody>
+                        {% for sale in sales %}
+                            <tr><td>{{ sale.invoice_number }}</td><td>{{ sale.sold_at|datetime_display }}</td><td>{{ sale.customer_name }}</td><td>{{ sale.product_name }}</td><td>{{ sale.quantity }}</td><td>Rs. {{ "%.2f"|format(sale.total_price) }}</td></tr>
+                        {% else %}
+                            <tr><td colspan="6" class="text-center py-3 text-muted">No sales in this range.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <div class="col-xl-6">
+        <section class="panel">
+            <div class="panel-header"><h3>Inventory Report</h3></div>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead><tr><th>Product</th><th>Code</th><th>Qty</th><th>Value</th></tr></thead>
+                    <tbody>
+                        {% for product in inventory %}
+                            <tr><td>{{ product.name }}</td><td>{{ product.code }}</td><td>{{ product.quantity }}</td><td>Rs. {{ "%.2f"|format(product.price * product.quantity) }}</td></tr>
+                        {% else %}
+                            <tr><td colspan="4" class="text-center py-3 text-muted">No products available.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <div class="col-xl-6">
+        <section class="panel">
+            <div class="panel-header"><h3>Preorder Delivery Report</h3></div>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead><tr><th>Delivery Date</th><th>Customer</th><th>Product</th><th>Status</th></tr></thead>
+                    <tbody>
+                        {% for preorder in deliveries %}
+                            <tr><td>{{ preorder.delivery_date }}</td><td>{{ preorder.customer_name }}</td><td>{{ preorder.product_name }}</td><td>{{ preorder.status.title() }}</td></tr>
+                        {% else %}
+                            <tr><td colspan="4" class="text-center py-3 text-muted">No deliveries in this range.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}

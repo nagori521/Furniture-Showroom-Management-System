@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Pending Payment Report | Vishal Bharat Furniture Works{% endblock %}
+{% block page_title %}Pending Payment Report{% endblock %}
+{% block page_subtitle %}Filter due-payment records by customer, sale date, and payment status.{% endblock %}
+
+{% block page_actions %}
+<a class="btn btn-outline-secondary" href="{{ url_for('payments.pending_payments') }}">Pending Register</a>
+<a class="btn btn-outline-primary" href="{{ url_for('payments.pending_report_csv', customer_id=customer_id, start_date=start_date, end_date=end_date, payment_status=payment_status) }}">CSV</a>
+<a class="btn btn-primary" href="{{ url_for('payments.pending_report_pdf', customer_id=customer_id, start_date=start_date, end_date=end_date, payment_status=payment_status) }}">PDF</a>
+{% endblock %}
+
+{% block content %}
+<section class="panel mb-4">
+    <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label">Customer</label>
+            <select class="form-select" name="customer_id">
+                <option value="">All customers</option>
+                {% for customer in customers %}
+                    <option value="{{ customer.id }}" {% if customer_id == customer.id %}selected{% endif %}>{{ customer.name }} - {{ customer.phone }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Start Date</label>
+            <input class="form-control" type="date" name="start_date" value="{{ start_date }}">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">End Date</label>
+            <input class="form-control" type="date" name="end_date" value="{{ end_date }}">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Payment Status</label>
+            <select class="form-select" name="payment_status">
+                <option value="all" {% if payment_status == 'all' %}selected{% endif %}>All</option>
+                <option value="Paid" {% if payment_status == 'Paid' %}selected{% endif %}>Paid</option>
+                <option value="Partial" {% if payment_status == 'Partial' %}selected{% endif %}>Partial</option>
+                <option value="Pending" {% if payment_status == 'Pending' %}selected{% endif %}>Pending</option>
+            </select>
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+            <button class="btn btn-primary w-100" type="submit">Apply</button>
+            <a class="btn btn-outline-secondary w-100" href="{{ url_for('payments.pending_report') }}">Reset</a>
+        </div>
+    </form>
+</section>
+
+<section class="panel">
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead><tr><th>Invoice</th><th>Date</th><th>Customer</th><th>Product</th><th>Final Amount</th><th>Paid Amount</th><th>Pending Amount</th><th>Status</th></tr></thead>
+            <tbody>
+                {% for sale in report_sales %}
+                    <tr>
+                        <td class="fw-semibold">{{ sale.invoice_number }}</td>
+                        <td>{{ sale.sold_at|datetime_display }}</td>
+                        <td>{{ sale.customer_name }}</td>
+                        <td>{{ sale.product_name }}</td>
+                        <td>Rs. {{ "%.2f"|format(sale.final_amount) }}</td>
+                        <td>Rs. {{ "%.2f"|format(sale.paid_amount) }}</td>
+                        <td class="{% if sale.pending_amount > 0 %}text-danger fw-semibold{% endif %}">Rs. {{ "%.2f"|format(sale.pending_amount) }}</td>
+                        <td><span class="badge payment-badge payment-{{ sale.payment_status|lower }}">{{ sale.payment_status }}</span></td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="8" class="text-center py-4 text-muted">No records found for this filter.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

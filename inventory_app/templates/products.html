@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Products | Vishal Bharat Furniture Works{% endblock %}
+{% block page_title %}Products{% endblock %}
+{% block page_subtitle %}Manage showroom catalog, prices, stock, and reserved inventory.{% endblock %}
+{% block page_actions %}
+        <a class="btn btn-primary" href="{{ url_for('products.add_product') }}">Add Product</a>
+
+{% endblock %}
+
+
+{% block content %}
+<section class="panel mb-4">
+    <form class="row g-3 align-items-end" method="get">
+        <div class="col-md-8 col-xl-6">
+            <label class="form-label">Search</label>
+            <input class="form-control" name="search" value="{{ search }}" placeholder="Name, code, or category">
+        </div>
+        <div class="col-md-4 col-xl-3 d-flex gap-2">
+            <button class="btn btn-dark w-100" type="submit">Search</button>
+            <a class="btn btn-outline-secondary w-100" href="{{ url_for('products.list_products') }}">Reset</a>
+        </div>
+    </form>
+</section>
+
+<section class="panel">
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Code</th>
+                    <th>Category</th>
+<th>Price</th>
+
+                    <th>Available</th>
+                    <th>Reserved</th>
+                    <th>Add Stock</th>
+                    <th class="text-end">Actions</th>
+
+                </tr>
+            </thead>
+            <tbody>
+{% for product in products %}
+                    <tr>
+
+                        <td>
+                            <div class="fw-semibold">{{ product.name }}</div>
+                            <div class="text-muted small">{{ product.description or "No description provided" }}</div>
+                        </td>
+                        <td>{{ product.code }}</td>
+                        <td>{{ product.category }}</td>
+                        <td>Rs. {{ "%.2f"|format(product.price) }}</td>
+
+                        <td>{% if product.quantity <= 5 %}<span class="badge text-bg-warning me-1">Low</span>{% endif %}{{ product.quantity }}</td>
+
+                        <td>{{ reserved_stock.get(product.id, 0) }}</td>
+<td>
+                            <form class="d-flex align-items-center gap-2" method="post" action="{{ url_for('products.add_stock', product_id=product.id) }}">
+                                <input class="form-control form-control-sm js-stock-qty" type="number" min="1" name="stock_quantity" placeholder="Qty" required>
+                                <button class="btn btn-sm btn-outline-primary js-stock-save" type="submit">Save</button>
+                            </form>
+                        </td>
+
+<td class="text-end">
+                            <div class="d-inline-flex align-items-center gap-2">
+                                <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('products.edit_product', product_id=product.id) }}">Edit</a>
+                                <form method="post" action="{{ url_for('products.delete_product', product_id=product.id) }}" class="m-0">
+                                    <button class="btn btn-sm btn-outline-danger js-confirm-delete" type="submit">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+
+
+                    </tr>
+                {% else %}
+                    <tr><td colspan="8" class="text-center py-4 text-muted">No products found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

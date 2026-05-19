@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Invoice {{ sale.invoice_number }} | Vishal Bharat Furniture Works{% endblock %}
+{% block page_title %}Invoice {{ sale.invoice_number }}{% endblock %}
+{% block page_subtitle %}Printable invoice for completed customer sale.{% endblock %}
+{% block page_actions %}<a class="btn btn-outline-primary" href="{{ url_for('sales.download_invoice', sale_id=sale.id) }}">Download PDF</a>{% endblock %}
+
+{% block content %}
+<section class="panel invoice-panel invoice-sheet">
+    <div class="document-header">
+        <div class="document-brand">
+            <div class="document-brand-mark">VB</div>
+            <div>
+                <p class="document-kicker">Tax Invoice</p>
+                <h3 class="mb-1">{{ shop_name }}</h3>
+                <div class="text-muted">{{ shop_address }}</div>
+                <div class="text-muted">Phone: {{ shop_phone }}</div>
+            </div>
+        </div>
+        <div class="document-meta">
+            <div><span>Invoice No</span><strong>{{ sale.invoice_number }}</strong></div>
+            <div><span>Invoice Date</span><strong>{{ sale.sold_at|datetime_display }}</strong></div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="detail-card">
+                <h4 class="h6 text-muted">Bill To</h4>
+                <div class="fw-semibold">{{ sale.customer_name }}</div>
+                <div>{{ sale.customer_phone }}</div>
+                <div>{{ sale.customer_address }}</div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="detail-card">
+                <h4 class="h6 text-muted">Invoice Details</h4>
+                <div class="fw-semibold">Furniture showroom bill</div>
+                <div>Product code: {{ sale.product_code }}</div>
+                <div>Quantity sold: {{ sale.quantity }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-responsive invoice-table-wrap">
+        <table class="table invoice-table">
+            <thead><tr><th>Product Name</th><th>Quantity</th><th>Price</th><th>Subtotal</th></tr></thead>
+            <tbody><tr><td>{{ sale.product_name }}</td><td>{{ sale.quantity }}</td><td>Rs. {{ "%.2f"|format(sale.unit_price) }}</td><td>Rs. {{ "%.2f"|format(sale.subtotal) }}</td></tr></tbody>
+        </table>
+    </div>
+
+    <div class="invoice-summary">
+        <div class="invoice-summary-row"><span>Subtotal</span><strong>₹ {{ "%.2f"|format(sale.subtotal) }}</strong></div>
+        <div class="invoice-summary-row"><span>Discount</span><strong>₹ {{ "%.2f"|format(sale.discount_amount) }}</strong></div>
+        <div class="invoice-summary-row"><span>Final Total</span><strong>₹ {{ "%.2f"|format(sale.final_total) }}</strong></div>
+        <div class="invoice-summary-row"><span>Paid Amount</span><strong>₹ {{ "%.2f"|format(sale.paid_amount) }}</strong></div>
+        <div class="invoice-summary-row invoice-summary-row-total"><span>Pending Amount</span><strong class="{% if sale.pending_amount > 0 %}text-danger{% else %}text-success{% endif %}">₹ {{ "%.2f"|format(sale.pending_amount) }}</strong></div>
+    </div>
+    <div class="document-footer">
+        <div>Thank you for your business.</div>
+        <div>Goods once sold will be serviced as per showroom policy. This invoice is A4 and PDF friendly.</div>
+    </div>
+</section>
+{% endblock %}
